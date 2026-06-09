@@ -94,7 +94,6 @@
         <div class="hbar" style="height:5%"></div>
         <div class="hbar" style="height:3%"></div>
       </div>
-
     </div>
 
     <div class="card card--kwh" id="card-kwh">
@@ -257,6 +256,26 @@
 
       <div class="cmd-divider"></div>
 
+      <!-- Comportamiento sin carga -->
+      <div class="cmd-block">
+        <div class="cmd-label">COMPORTAMIENTO SIN CARGA</div>
+        <div class="cmd-hint" style="margin-bottom:10px">¿Qué hacer cuando no se detecta corriente?</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="noLoadOff" class="cmd-send-btn active"
+                  onclick="sendNoLoadAction('OFF')"
+                  title="Desconectar la salida si no hay corriente">
+            ✕ Desconectar
+          </button>
+          <button id="noLoadKeep" class="cmd-send-btn"
+                  onclick="sendNoLoadAction('KEEP')"
+                  title="Mantener la salida encendida aunque no haya corriente">
+            ✔ Mantener
+          </button>
+        </div>
+      </div>
+
+      <div class="cmd-divider"></div>
+
       <!-- Límite de potencia -->
       <div class="cmd-block">
         <div class="cmd-label">LÍMITE DE POTENCIA</div>
@@ -289,24 +308,6 @@
           <div class="slider-labels"><span>1 s</span><span>30 s</span><span>60 s</span></div>
         </div>
         <button class="cmd-send-btn" onclick="sendSampleRate()">Enviar intervalo</button>
-      </div>
-
-      <div class="cmd-divider"></div>
-
-      <!-- Comportamiento sin corriente -->
-      <div class="cmd-block">
-        <div class="cmd-label">COMPORTAMIENTO SIN CORRIENTE</div>
-        <div class="cmd-hint" style="margin-bottom:10px">Acción cuando no se detecta carga (FAULT_NO_LOAD)</div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-          <label class="cmd-hint" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
-            <input type="radio" name="noLoadAction" id="noLoadKeep" value="KEEP" checked onchange="sendNoLoadAction(this.value)" />
-            Mantener salida encendida
-          </label>
-          <label class="cmd-hint" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
-            <input type="radio" name="noLoadAction" id="noLoadOff" value="OFF" onchange="sendNoLoadAction(this.value)" />
-            Desconectar salida automáticamente
-          </label>
-        </div>
       </div>
 
     </div>
