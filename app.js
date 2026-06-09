@@ -111,19 +111,25 @@ function registerDeviceFromTopic(topic) {
   }
 }
 
-// Publica un mensaje en el tópico de control de CADA dispositivo conocido
+// Publica un mensaje en el tópico de control de CADA dispositivo conocido.
+// Usa el mismo patrón de Paho que publishMessage (que sí funciona con toggleRelay).
 function publishToAllDevices(controlPath, payload) {
   if (!connected || !client) {
     log('Error: No conectado. No se puede enviar comando.', 'error');
     return;
   }
+  const payloadStr = payload.toString();
   knownDevices.forEach(deviceId => {
     const topic = `smartcontact/${deviceId}/${controlPath}`;
-    const message = new Paho.MQTT.Message(payload.toString());
-    message.destinationName = topic;
-    client.send(message);
+    const msg = new Paho.MQTT.Message(payloadStr);
+    msg.destinationName = topic;
+    try {
+      client.send(msg);
+      log(`▸ [${topic}] → ${payloadStr}`, 'success');
+    } catch (e) {
+      log(`Error enviando a ${topic}: ${e.message}`, 'error');
+    }
   });
-  log(`▸ Enviado a ${knownDevices.size} dispositivo(s) [${controlPath}]: ${payload}`, 'info');
 }
 
 const FAULTS = {
@@ -2535,12 +2541,14 @@ window.toggleRelay = function () {
 window.sendPowerLimit = function () {
   const rawValue = $('powerLimitSlider').value;
   const limitValue = String(rawValue).padStart(4, '0');
+  log(`Dispositivos conocidos: [${[...knownDevices].join(', ')}]`, 'info');
   publishToAllDevices('control/limite_potencia', limitValue);
 };
 
 // 3. Comando de Tiempo de Muestreo
 window.sendSampleRate = function () {
   const sampleValue = $('sampleRate').value;
+  log(`Dispositivos conocidos: [${[...knownDevices].join(', ')}]`, 'info');
   publishToAllDevices('control/tiempo_muestreo', sampleValue);
   applySampleRate(sampleValue);
 };
