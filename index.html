@@ -34,7 +34,7 @@
   <div class="config-bar">
     <div class="config-field">
       <label>Broker (IP)</label>
-      <input type="text" id="brokerHost" value="localhost" placeholder="192.168.1.x" />
+      <input type="text" id="brokerHost" value="localhost" placeholder="10.22.xxx.xxx" />
     </div>
     <div class="config-field">
       <label>Puerto WS</label>
@@ -151,21 +151,18 @@
       <div class="card-label">POTENCIA ACTIVA</div>
       <div class="card-value" id="val-pa">---</div>
       <div class="card-unit">W</div>
-      <div class="card-icon">▶</div>
     </div>
 
     <div class="card card--power card--apparent" id="card-pap">
       <div class="card-label">POTENCIA APARENTE</div>
       <div class="card-value" id="val-pap">---</div>
       <div class="card-unit">VA</div>
-      <div class="card-icon">◈</div>
     </div>
 
     <div class="card card--power card--reactive" id="card-pr">
       <div class="card-label">POTENCIA REACTIVA</div>
       <div class="card-value" id="val-pr">---</div>
       <div class="card-unit">VAR</div>
-      <div class="card-icon">↺</div>
     </div>
 
   </main>
@@ -269,7 +266,7 @@
           <button id="noLoadKeep" class="cmd-send-btn"
                   onclick="sendNoLoadAction('KEEP')"
                   title="Mantener la salida encendida aunque no haya corriente">
-            ✔ Mantener
+            ✔ Conectar
           </button>
         </div>
       </div>
