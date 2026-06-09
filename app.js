@@ -91,6 +91,41 @@ let periodStartKwh = 0;
 // Límites para las barras de progreso
 const LIMITS = { v: 250, i: 10 };
 
+// ------------------------------------------------------------------
+// Registro dinámico de dispositivos detectados
+// Se puebla automáticamente al recibir telemetría de cualquier ESP32.
+// El dashboard extrae el device ID del tópico y lo guarda aquí.
+// Así publishToAllDevices() sabe a cuántos y cuáles enviar.
+// ------------------------------------------------------------------
+const knownDevices = new Set(['contacto_01']); // seed: el dispositivo hardcodeado
+
+function registerDeviceFromTopic(topic) {
+  // Los tópicos siguen el patrón: smartcontact/<device_id>/...
+  const parts = topic.split('/');
+  if (parts.length >= 2 && parts[0] === 'smartcontact') {
+    const deviceId = parts[1];
+    if (deviceId && !knownDevices.has(deviceId)) {
+      knownDevices.add(deviceId);
+      log(`✔ Nuevo dispositivo detectado: ${deviceId} (total: ${knownDevices.size})`, 'success');
+    }
+  }
+}
+
+// Publica un mensaje en el tópico de control de CADA dispositivo conocido
+function publishToAllDevices(controlPath, payload) {
+  if (!connected || !client) {
+    log('Error: No conectado. No se puede enviar comando.', 'error');
+    return;
+  }
+  knownDevices.forEach(deviceId => {
+    const topic = `smartcontact/${deviceId}/${controlPath}`;
+    const message = new Paho.MQTT.Message(payload.toString());
+    message.destinationName = topic;
+    client.send(message);
+  });
+  log(`▸ Enviado a ${knownDevices.size} dispositivo(s) [${controlPath}]: ${payload}`, 'info');
+}
+
 const FAULTS = {
   FAULT_OVERCURRENT: {
     bit: 0,
@@ -513,7 +548,7 @@ function connect() {
   // y leer el ArrayBuffer interno ANTES de que Paho intente decodificar UTF-8.
   client.onMessageArrived = function(message) {
     try {
-      if (message.destinationName === WAVEFORM_RESPONSE_TOPIC) {
+      if (message.destinationName.match(/^smartcontact\/.+\/telemetria\/waveform$/)) {
         _handleWaveformMessage(message);
         return;
       }
@@ -554,23 +589,23 @@ function onConnected(topic) {
     onFailure:  (err) => log(`Error suscripción: ${err.errorMessage}`, 'error'),    
   });
 
-  client.subscribe('smartcontact/contacto_01/telemetria/estado', {
-    onSuccess: () => log('✔ Suscripción a telemetría/estado confirmada.', 'success'),
+  client.subscribe('smartcontact/+/telemetria/estado', {
+    onSuccess: () => log('✔ Suscripción a telemetría/estado (todos los dispositivos) confirmada.', 'success'),
     onFailure: err => log(`Error suscripción telemetría/estado: ${err.errorMessage}`, 'error'),
   });  
 
-  // Suscripción a las alertas
-  client.subscribe('smartcontact/contacto_01/alertas');
+  // Suscripción a las alertas de todos los dispositivos
+  client.subscribe('smartcontact/+/alertas');
 
-  // Suscripción al estado físico del relé
-  client.subscribe('smartcontact/contacto_01/estado/rele');
-  client.subscribe(HARMONICS_TOPIC, {
-    onSuccess: () => log(`✔ Suscripción a "${HARMONICS_TOPIC}" confirmada.`, 'success'),
+  // Suscripción al estado físico del relé de todos los dispositivos
+  client.subscribe('smartcontact/+/estado/rele');
+  client.subscribe('smartcontact/+/telemetria/armonicos', {
+    onSuccess: () => log(`✔ Suscripción a armónicos (todos los dispositivos) confirmada.`, 'success'),
     onFailure: err => log(`Error suscripción armónicos: ${err.errorMessage}`, 'error'),
   });
 
-  client.subscribe(WAVEFORM_RESPONSE_TOPIC, {
-    onSuccess: () => log(`✔ Suscripción a "${WAVEFORM_RESPONSE_TOPIC}" confirmada.`, 'success'),
+  client.subscribe('smartcontact/+/telemetria/waveform', {
+    onSuccess: () => log(`✔ Suscripción a waveform (todos los dispositivos) confirmada.`, 'success'),
     onFailure: err => log(`Error suscripción waveform: ${err.errorMessage}`, 'error'),
   });
 
@@ -600,10 +635,15 @@ function onMessageArrived(message) {
   const raw = message.payloadString;
   const telemetriaTopic = 'sec/datos';
 
+  // Registrar automáticamente cualquier dispositivo que publique bajo smartcontact/
+  if (topic.startsWith('smartcontact/')) {
+    registerDeviceFromTopic(topic);
+  }
+
   // ============================================================
   // FLUJO A: Telemetría normal (Datos para tus gráficas)
   // ============================================================
-  if (topic === telemetriaTopic || topic === 'smartcontact/contacto_01/telemetria/estado') {
+  if (topic === telemetriaTopic || topic.match(/^smartcontact\/.+\/telemetria\/estado$/)) {
     log(`← ${raw}`, 'data');
     try {
       const d = JSON.parse(raw);
@@ -633,7 +673,7 @@ function onMessageArrived(message) {
   // ============================================================
   // FLUJO B: Alertas del ESP32 (Errores físicos detectados)
   // ============================================================
-  else if (topic === 'smartcontact/contacto_01/alertas') {
+  else if (topic.match(/^smartcontact\/.+\/alertas$/)) {
     try {
       const payload = JSON.parse(raw);
 
@@ -710,7 +750,7 @@ function onMessageArrived(message) {
   // ============================================================
   // FLUJO C: Sincronización del botón físico del ESP32
   // ============================================================
-  else if (topic === 'smartcontact/contacto_01/estado/rele') {
+  else if (topic.match(/^smartcontact\/.+\/estado\/rele$/)) {
     const estadoFisico = raw.trim().toUpperCase();
     
     const btn  = $('onoffBtn');
@@ -750,7 +790,7 @@ function onMessageArrived(message) {
   // ============================================================
   // FLUJO D: Armónicos THD en vivo
   // ============================================================
-  else if (topic === HARMONICS_TOPIC) {
+  else if (topic.match(/^smartcontact\/.+\/telemetria\/armonicos$/)) {
     log(`← Armónicos THD: ${raw}`, 'data');
 
     try {
@@ -764,7 +804,7 @@ function onMessageArrived(message) {
   // FLUJO E: Forma de onda — manejado por _handleWaveformMessage antes de llegar aquí
   // (el dispatch ocurre en client.onMessageArrived para evitar que Paho procese
   //  el payload binario como UTF-8 y cierre la conexión)
-  else if (topic === WAVEFORM_RESPONSE_TOPIC) {
+  else if (topic.match(/^smartcontact\/.+\/telemetria\/waveform$/)) {
     // No debería llegar aquí; _handleWaveformMessage lo intercepta antes.
     log('Waveform llegó a onMessageArrived (inesperado).', 'warn');
   }
@@ -2493,41 +2533,26 @@ window.toggleRelay = function () {
 
 // 2. Comando de Límite de Potencia
 window.sendPowerLimit = function () {
-  // 1. Obtenemos el valor del slider
   const rawValue = $('powerLimitSlider').value;
-  
-  // 2. Lo convertimos a texto y forzamos los 4 dígitos con ceros a la izquierda
   const limitValue = String(rawValue).padStart(4, '0');
-  
-  const topic = 'smartcontact/broadcast/control/limite_potencia'; 
-  
-  // 3. Enviamos el valor ya formateado (ej. "0009", "0099", "0999", "1200")
-  publishMessage(topic, limitValue);
-  log(`▸ Comando enviado: Límite Potencia -> ${limitValue} W`, 'info');
+  publishToAllDevices('control/limite_potencia', limitValue);
 };
 
 // 3. Comando de Tiempo de Muestreo
 window.sendSampleRate = function () {
   const sampleValue = $('sampleRate').value;
-  const topic = 'smartcontact/broadcast/control/tiempo_muestreo';
-  
-  publishMessage(topic, sampleValue);
-  log(`▸ Comando enviado: Muestreo -> ${sampleValue} seg`, 'info');
-
-  // Sincronizar el timer de kWh y el watchdog con el nuevo intervalo
+  publishToAllDevices('control/tiempo_muestreo', sampleValue);
   applySampleRate(sampleValue);
 };
 
 // 4. Comando de comportamiento sin carga (FAULT_NO_LOAD)
-// Tópico broadcast: smartcontact/broadcast/control/no_load_action
-// La ESP32 debe suscribirse a este tópico para recibir el comando en todos los dispositivos.
+// Control path: control/no_load_action
 // Payload: "OFF"  → desconectar salida automáticamente cuando no hay corriente
 //          "KEEP" → mantener salida encendida aunque no haya corriente
 window.sendNoLoadAction = function (value) {
-  const topic = 'smartcontact/broadcast/control/no_load_action';
-  publishMessage(topic, value);
   const label = value === 'OFF' ? 'Desconectar salida sin carga' : 'Mantener salida sin carga';
-  log(`▸ Comando enviado: No-load action -> ${value} (${label})`, 'info');
+  publishToAllDevices('control/no_load_action', value);
+  log(`  (${label})`, 'info');
 };
 
 window.addEventListener('DOMContentLoaded', () => {
