@@ -89,7 +89,7 @@ let periodStartTime = null;
 let periodStartKwh = 0;
 
 // Límites para las barras de progreso
-const LIMITS = { v: 250, i: 16 };
+const LIMITS = { v: 250, i: 10 };
 
 const FAULTS = {
   FAULT_OVERCURRENT: {
@@ -647,7 +647,9 @@ function onMessageArrived(message) {
       const cleared     = payload.cleared === true;
 
       // Construir fecha legible desde el timestamp del hardware
-      const fechaHardware = timestampMs > 0
+      // Si el timestamp es 0, inválido, o antes del año 2020, usar la fecha actual del navegador
+      const MIN_VALID_TS_MS = new Date('2020-01-01').getTime();
+      const fechaHardware = (timestampMs > MIN_VALID_TS_MS)
         ? new Date(timestampMs).toLocaleString('es-MX')
         : new Date().toLocaleString('es-MX');
 
@@ -2215,7 +2217,7 @@ function updateDashboard(d) {
   if (d.p_activa !== undefined) {
     setVal('pa', d.p_activa, 1, 'W');
     lastPowerW = parseFloat(d.p_activa);
-    $('kwh-power').textContent = lastPowerW.toFixed(1) + ' W';
+    const _kwhPow1 = $('kwh-power'); if (_kwhPow1) _kwhPow1.textContent = lastPowerW.toFixed(1) + ' W';
 
     updatePowerChart(lastPowerW);
   }
@@ -2308,7 +2310,7 @@ function _scheduleKwhTick() {
 
     $('val-kwh').textContent = kwhTotal.toFixed(4);
     $('kwh-session').textContent = kwhTotal.toFixed(4) + ' kWh';
-    $('kwh-power').textContent = lastPowerW.toFixed(1) + ' W';
+    const _kwhPow2 = $('kwh-power'); if (_kwhPow2) _kwhPow2.textContent = lastPowerW.toFixed(1) + ' W';
 
     // Actualizar costo de sesión en pesos
     const sessionCost = calculateTieredEnergyCost(kwhTotal);
@@ -2354,7 +2356,7 @@ window.resetKwh = function () {
 
   $('val-kwh').textContent = '0.0000';
   $('kwh-session').textContent = '0.0000 kWh';
-  $('kwh-power').textContent = lastPowerW.toFixed(1) + ' W';
+  const _kwhPow3 = $('kwh-power'); if (_kwhPow3) _kwhPow3.textContent = lastPowerW.toFixed(1) + ' W';
   $('kwh-time').textContent = '00:00:00';
   updateEnergyCost();
 
@@ -2497,7 +2499,7 @@ window.sendPowerLimit = function () {
   // 2. Lo convertimos a texto y forzamos los 4 dígitos con ceros a la izquierda
   const limitValue = String(rawValue).padStart(4, '0');
   
-  const topic = 'smartcontact/contacto_01/control/limite_potencia'; 
+  const topic = 'smartcontact/+/control/limite_potencia'; 
   
   // 3. Enviamos el valor ya formateado (ej. "0009", "0099", "0999", "1200")
   publishMessage(topic, limitValue);
@@ -2507,13 +2509,24 @@ window.sendPowerLimit = function () {
 // 3. Comando de Tiempo de Muestreo
 window.sendSampleRate = function () {
   const sampleValue = $('sampleRate').value;
-  const topic = 'smartcontact/contacto_01/control/tiempo_muestreo';
+  const topic = 'smartcontact/+/control/tiempo_muestreo';
   
   publishMessage(topic, sampleValue);
   log(`▸ Comando enviado: Muestreo -> ${sampleValue} seg`, 'info');
 
   // Sincronizar el timer de kWh y el watchdog con el nuevo intervalo
   applySampleRate(sampleValue);
+};
+
+// 4. Comando de comportamiento sin carga (FAULT_NO_LOAD)
+// Tópico: smartcontact/+/control/no_load_action
+// Payload: "OFF"  → desconectar salida automáticamente cuando no hay corriente
+//          "KEEP" → mantener salida encendida aunque no haya corriente
+window.sendNoLoadAction = function (value) {
+  const topic = 'smartcontact/+/control/no_load_action';
+  publishMessage(topic, value);
+  const label = value === 'OFF' ? 'Desconectar salida sin carga' : 'Mantener salida sin carga';
+  log(`▸ Comando enviado: No-load action -> ${value} (${label})`, 'info');
 };
 
 window.addEventListener('DOMContentLoaded', () => {
