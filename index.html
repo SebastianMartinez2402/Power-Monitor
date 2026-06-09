@@ -298,11 +298,11 @@
         <div class="cmd-label">COMPORTAMIENTO SIN CORRIENTE</div>
         <div class="cmd-hint" style="margin-bottom:10px">Acción cuando no se detecta carga (FAULT_NO_LOAD)</div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+          <label class="cmd-hint" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
             <input type="radio" name="noLoadAction" id="noLoadKeep" value="KEEP" checked onchange="sendNoLoadAction(this.value)" />
             Mantener salida encendida
           </label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+          <label class="cmd-hint" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
             <input type="radio" name="noLoadAction" id="noLoadOff" value="OFF" onchange="sendNoLoadAction(this.value)" />
             Desconectar salida automáticamente
           </label>
