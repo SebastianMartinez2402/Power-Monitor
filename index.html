@@ -64,7 +64,7 @@
       <div class="card-value" id="val-i">---</div>
       <div class="card-unit">A</div>
       <div class="card-bar"><div class="bar-fill" id="bar-i" style="width:0%"></div></div>
-      <div class="card-range">0 — 16 A</div>
+      <div class="card-range">0 — 10 A</div>
     </div>
 
     <div class="card card--fp" id="card-fp">
@@ -94,7 +94,7 @@
         <div class="hbar" style="height:5%"></div>
         <div class="hbar" style="height:3%"></div>
       </div>
-      <div class="thd-labels">1° &nbsp;&nbsp; 3° &nbsp;&nbsp; 5° &nbsp;&nbsp; 7°</div>
+
     </div>
 
     <div class="card card--kwh" id="card-kwh">
@@ -105,10 +105,6 @@
         <div class="kwh-item">
           <span class="kwh-item-label">Sesión actual</span>
           <span class="kwh-item-val" id="kwh-session">0.000 kWh</span>
-        </div>
-        <div class="kwh-item">
-          <span class="kwh-item-label">Potencia activa</span>
-          <span class="kwh-item-val" id="kwh-power">--- W</span>
         </div>
         <div class="kwh-item">
           <span class="kwh-item-label">Tiempo activo</span>
@@ -293,6 +289,24 @@
           <div class="slider-labels"><span>1 s</span><span>30 s</span><span>60 s</span></div>
         </div>
         <button class="cmd-send-btn" onclick="sendSampleRate()">Enviar intervalo</button>
+      </div>
+
+      <div class="cmd-divider"></div>
+
+      <!-- Comportamiento sin corriente -->
+      <div class="cmd-block">
+        <div class="cmd-label">COMPORTAMIENTO SIN CORRIENTE</div>
+        <div class="cmd-hint" style="margin-bottom:10px">Acción cuando no se detecta carga (FAULT_NO_LOAD)</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+            <input type="radio" name="noLoadAction" id="noLoadKeep" value="KEEP" checked onchange="sendNoLoadAction(this.value)" />
+            Mantener salida encendida
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+            <input type="radio" name="noLoadAction" id="noLoadOff" value="OFF" onchange="sendNoLoadAction(this.value)" />
+            Desconectar salida automáticamente
+          </label>
+        </div>
       </div>
 
     </div>
