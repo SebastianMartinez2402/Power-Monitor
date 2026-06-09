@@ -2499,7 +2499,7 @@ window.sendPowerLimit = function () {
   // 2. Lo convertimos a texto y forzamos los 4 dígitos con ceros a la izquierda
   const limitValue = String(rawValue).padStart(4, '0');
   
-  const topic = 'smartcontact/+/control/limite_potencia'; 
+  const topic = 'smartcontact/broadcast/control/limite_potencia'; 
   
   // 3. Enviamos el valor ya formateado (ej. "0009", "0099", "0999", "1200")
   publishMessage(topic, limitValue);
@@ -2509,7 +2509,7 @@ window.sendPowerLimit = function () {
 // 3. Comando de Tiempo de Muestreo
 window.sendSampleRate = function () {
   const sampleValue = $('sampleRate').value;
-  const topic = 'smartcontact/+/control/tiempo_muestreo';
+  const topic = 'smartcontact/broadcast/control/tiempo_muestreo';
   
   publishMessage(topic, sampleValue);
   log(`▸ Comando enviado: Muestreo -> ${sampleValue} seg`, 'info');
@@ -2519,11 +2519,12 @@ window.sendSampleRate = function () {
 };
 
 // 4. Comando de comportamiento sin carga (FAULT_NO_LOAD)
-// Tópico: smartcontact/+/control/no_load_action
+// Tópico broadcast: smartcontact/broadcast/control/no_load_action
+// La ESP32 debe suscribirse a este tópico para recibir el comando en todos los dispositivos.
 // Payload: "OFF"  → desconectar salida automáticamente cuando no hay corriente
 //          "KEEP" → mantener salida encendida aunque no haya corriente
 window.sendNoLoadAction = function (value) {
-  const topic = 'smartcontact/+/control/no_load_action';
+  const topic = 'smartcontact/broadcast/control/no_load_action';
   publishMessage(topic, value);
   const label = value === 'OFF' ? 'Desconectar salida sin carga' : 'Mantener salida sin carga';
   log(`▸ Comando enviado: No-load action -> ${value} (${label})`, 'info');
