@@ -154,10 +154,10 @@ header {
 
 .header-left { display: flex; align-items: center; gap: 14px; }
 
-.logo-mark {
-  font-size: 2rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 8px #ffcc00aa);
+.logo-mark img {
+  height: 40px;
+  width: auto;
+  display: block;
 }
 
 header h1 {
@@ -477,6 +477,10 @@ main {
   border-radius: 4px;
   border-left: 2px solid var(--accent-kwh);
 }
+
+.card--cost .kwh-item {
+  border-left-color: var(--accent-pr);
+}
 .kwh-item-label {
   font-family: var(--mono);
   font-size: 0.62rem;
@@ -488,6 +492,10 @@ main {
   font-family: var(--mono);
   font-size: 0.8rem;
   color: var(--accent-kwh);
+}
+
+.card--cost .kwh-item-val {
+  color: var(--accent-pr);
 }
 .kwh-reset-btn {
   margin-top: 10px;
