@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Power Monitor — Dashboard</title>
+  <link rel="icon" type="image/png" href="logo.png">
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
@@ -15,7 +16,7 @@
   <!-- HEADER -->
   <header>
     <div class="header-left">
-      <div class="logo-mark">⚡</div>
+      <div class="logo-mark"><img src="logo.png" alt="Logo" /></div>
       <div>
         <h1>Power Monitor</h1>
         <span class="subtitle">Panel de Monitoreo en Tiempo Real</span>
@@ -85,15 +86,6 @@
       <div class="card-label">DISTORSIÓN ARMÓNICA (THD)</div>
       <div class="card-value" id="val-thd">---</div>
       <div class="card-unit">%</div>
-      <div class="thd-bars" id="thdBars">
-        <div class="hbar" style="height:100%"></div>
-        <div class="hbar" style="height:35%"></div>
-        <div class="hbar" style="height:20%"></div>
-        <div class="hbar" style="height:12%"></div>
-        <div class="hbar" style="height:8%"></div>
-        <div class="hbar" style="height:5%"></div>
-        <div class="hbar" style="height:3%"></div>
-      </div>
     </div>
 
     <div class="card card--kwh" id="card-kwh">
@@ -114,18 +106,18 @@
     </div>
 
     <div class="card card--cost" id="card-cost">
-      <span class="kwh-item-label">Costo sesión</span>
+      <span class="kwh-item-label">Costo acumulado</span>
 
       <div class="card-value">
-        $<span id="val-cost">0.00</span>
+        $<span id="val-cost">0.0000</span>
       </div>
 
       <div class="card-unit">MXN</div>
 
       <div class="kwh-sub">
         <div class="kwh-item">
-          <span class="kwh-item-label">Consumo bimestre</span>
-          <span class="kwh-item-val" id="cost-session">0.0000 kWh</span>
+          <span class="kwh-item-label">Costo sesión</span>
+          <span class="kwh-item-val" id="cost-session">0.0000 MXN</span>
         </div>
 
         <div class="kwh-item">
@@ -201,15 +193,15 @@
     </div>
   </div>
 
-  <!-- GRÁFICA DE ARMÓNICOS THD EN VIVO -->
+  <!-- GRÁFICA DE ARMÓNICOS THD -->
   <div class="chart-panel">
     <div class="chart-header">
-      <span>▸ ARMÓNICOS THD EN VIVO</span>
+      <span>▸ ARMÓNICOS THD</span>
       <div class="chart-header-actions">
         <span class="chart-live-status">
           Última actualización: <span id="harmonicLastUpdate">--:--:--</span>
         </span>
-        <button class="chart-range-btn" onclick="requestHarmonics()">Solicitar armónicos</button>
+        <button class="chart-range-btn" onclick="requestHarmonics()">Solicitar</button>
       </div>
     </div>
 
@@ -227,7 +219,7 @@
         <span class="chart-live-status" id="waveformStatus">
           Sin captura
         </span>
-        <button class="chart-range-btn" onclick="requestWaveform()">Solicitar onda</button>
+        <button class="chart-range-btn" onclick="requestWaveform()">Solicitar</button>
       </div>
     </div>
 
@@ -256,17 +248,17 @@
       <!-- Comportamiento sin carga -->
       <div class="cmd-block">
         <div class="cmd-label">COMPORTAMIENTO SIN CARGA</div>
-        <div class="cmd-hint" style="margin-bottom:10px">¿Qué hacer cuando no se detecta corriente?</div>
+        <div class="cmd-hint" style="margin-bottom:10px">Al desconectar la carga, mantener el sistema:</div>
         <div style="display:flex;gap:8px;justify-content:center">
           <button id="noLoadOff" class="cmd-send-btn active"
                   onclick="sendNoLoadAction('OFF')"
                   title="Desconectar la salida si no hay corriente">
-            ✕ Desconectar
+            ✕ Desconectado
           </button>
           <button id="noLoadKeep" class="cmd-send-btn"
                   onclick="sendNoLoadAction('KEEP')"
                   title="Mantener la salida encendida aunque no haya corriente">
-            ✔ Conectar
+            ✔ Conectado
           </button>
         </div>
       </div>
@@ -286,7 +278,7 @@
                  oninput="syncPowerLimit(this.value)" />
           <div class="slider-labels"><span>0 W</span><span>600 W</span><span>1200 W</span></div>
         </div>
-        <button class="cmd-send-btn" onclick="sendPowerLimit()">Enviar límite</button>
+        <button class="cmd-send-btn" onclick="sendPowerLimit()">Enviar</button>
       </div>
 
       <div class="cmd-divider"></div>
@@ -304,7 +296,7 @@
                  oninput="syncSampleRate(this.value)" />
           <div class="slider-labels"><span>1 s</span><span>30 s</span><span>60 s</span></div>
         </div>
-        <button class="cmd-send-btn" onclick="sendSampleRate()">Enviar intervalo</button>
+        <button class="cmd-send-btn" onclick="sendSampleRate()">Enviar</button>
       </div>
 
     </div>
